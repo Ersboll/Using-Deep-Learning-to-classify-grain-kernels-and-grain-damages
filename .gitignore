@@ -2,6 +2,7 @@
 img/
 project-env/
 data/
+data_preprocessed/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
