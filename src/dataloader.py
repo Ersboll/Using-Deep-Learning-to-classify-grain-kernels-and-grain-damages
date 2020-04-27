@@ -16,15 +16,10 @@ class dataset (Dataset):
         return len(self.data)
     
     def __getitem__(self,idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-        temp = np.zeros((len(idx),7,320,100))
-        to_be_loaded = self.data[idx]
-        for item,i in zip(to_be_loaded,range(len(idx))):
-            temp[i,:,:,:] = np.load(item)
+        temp = np.load(self.data[idx])
         
-        X = temp
-        y = self.target[idx]
+        X = torch.from_numpy(temp).type(torch.DoubleTensor)
+        y = torch.tensor(self.target[idx]).type(torch.LongTensor)
         
         return X,y
 

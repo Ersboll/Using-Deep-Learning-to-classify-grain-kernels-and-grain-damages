@@ -1,6 +1,8 @@
 from model import SE_ResNetBlock
 from model import ResNetBlock
-import dataloader
+from dataloader import *
+import torch
+import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
