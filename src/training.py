@@ -85,7 +85,6 @@ def train(model, optimizer, num_epochs=10):
             train_correct += (target==predicted).sum().cpu().item()
             
             #Remove mini-batch from memory
-            torch.cuda.empty_cache()
             del data, target, loss
         #Comput the test accuracy
         test_correct = 0
@@ -96,8 +95,8 @@ def train(model, optimizer, num_epochs=10):
                 output = model(data)
             predicted = output.argmax(1).cpu()
             test_correct += (target==predicted).sum().item()
-        train_acc = train_correct/len(trainset)
-        test_acc = test_correct/len(testset)
+        train_acc = train_correct/len(train_set)
+        test_acc = test_correct/len(test_set)
         train_acc_all.append(train_acc)
         test_acc_all.append(test_acc)
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))

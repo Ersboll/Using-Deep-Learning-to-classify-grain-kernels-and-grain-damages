@@ -53,5 +53,5 @@ for label in labels_train:
 weights = torch.FloatTensor(weights)
 sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True)
 
-train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4)
-test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,num_workers=4)
+train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=0)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,num_workers=0)
