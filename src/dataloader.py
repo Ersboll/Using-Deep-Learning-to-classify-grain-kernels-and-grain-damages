@@ -4,6 +4,8 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torch.utils.data import random_split
+from torch.utils.data import Sampler
+from torch.utils.data import WeightedRandomSampler
 
 class dataset (Dataset):
     def __init__(self,data,target):
@@ -40,5 +42,21 @@ labels_test = labels[split[1].indices]
 train_set = dataset(data_train,labels_train)
 test_set = dataset(data_test,labels_test)
 
-train_loader = DataLoader(train_set, batch_size=512, shuffle=True,num_workers=0)
-test_loader = DataLoader(test_set, batch_size=512, shuffle=False,num_workers=0)
+batch_size = 512
+weights = []
+for label in labels_train:
+    if label == 0:
+        weights.append(0.2/len(labels_train[labels_train==0]))
+    elif label == 1:
+        weights.append(0.2/len(labels_train[labels_train==1]))
+    elif label == 2:
+        weights.append(0.2/len(labels_train[labels_train==2]))
+    elif label == 3:
+        weights.append(0.2/len(labels_train[labels_train==3]))
+    else:
+        weights.append(0.2/len(labels_train[labels_train==4]))
+weights = torch.FloatTensor(weights)
+sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True)
+
+train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,num_workers=4)

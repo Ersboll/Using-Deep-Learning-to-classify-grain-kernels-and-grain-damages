@@ -61,11 +61,11 @@ def train(model, optimizer, num_epochs=10):
     train_acc_all = []
     test_acc_all = []
 
-    for epoch in tqdm(range(num_epochs), unit='epoch'):
+    for epoch in range(num_epochs):
         model.train()
         #For each epoch
         train_correct = 0
-        for minibatch_no, (data, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
+        for minibatch_no, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
             #Zero the gradients computed for each weight
             optimizer.zero_grad()
