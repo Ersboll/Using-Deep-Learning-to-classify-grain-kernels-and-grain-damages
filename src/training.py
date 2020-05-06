@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from datetime import datetime
 
 if torch.cuda.is_available():
     print("The code will run on GPU. This is important so things run faster.")
@@ -115,4 +116,10 @@ model.to(device)
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(),lr=1e-3)
 #run the training loop
-train(model,optimizer,num_epochs=10)
+test_acc_all,train_acc_all = train(model,optimizer,num_epochs=10)
+
+#Save model
+today = datetime.today()
+torch.save(model.state_dict(), '../Models/SEResNet-{date}'.format(date=today.strftime("%I%p-%d-%h")))
+np.save('../Models/test_res_{}'.format(today.strftime("%I%p-%d-%h")),test_acc_all)
+np.save('../Models/train_res_{}'.format(today.strftime("%I%p-%d-%h")),train_acc_all)
