@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from datetime import datetime
 
 if torch.cuda.is_available():
     print("The code will run on GPU. This is important so things run faster.")
@@ -22,7 +23,7 @@ class SE_ResNet(nn.Module):
                       nn.ReLU(),
                       nn.Conv2d(n_features,n_features,3,1,1),
                       nn.ReLU(),
-                      nn.MaxPool2d(2,2), #160x50
+                      nn.MaxPool2d(2,2), #128x64 -> 64x32
                       nn.Conv2d(n_features,2*n_features,3,1,1),
                       nn.ReLU()]
         
@@ -31,25 +32,24 @@ class SE_ResNet(nn.Module):
             
         conv_layers.append(nn.Sequential(nn.MaxPool2d(2,2),
                             nn.Conv2d(2*n_features, 4*n_features, kernel_size=3, stride=1, padding=1),
-                            nn.ReLU())) #80x25
+                            nn.ReLU())) #64x32 -> 32x16
         
         for i in range(num_blocks):
             conv_layers.append(SE_ResNetBlock(4*n_features,r))
             
         conv_layers.append(nn.Sequential(nn.MaxPool2d(2,2),
                             nn.Conv2d(4*n_features, 8*n_features, kernel_size=3, stride=1, padding=1),
-                            nn.ReLU())) #40x13 eller #40x12
+                            nn.ReLU())) #32x16 ->16x8
         for i in range(num_blocks):
             conv_layers.append(SE_ResNetBlock(8*n_features,r))
         
         self.blocks = nn.Sequential(*conv_layers)
         
-        self.fc = nn.Sequential(nn.Linear(40*12*8*n_features, 2048),
+        self.fc = nn.Sequential(nn.Linear(16*8*8*n_features, 2048),
                                 nn.ReLU(),
                                 nn.Linear(2048, 512),
                                 nn.ReLU(),
-                                nn.Linear(512,5),
-                                nn.Softmax(dim=1))
+                                nn.Linear(512,5))
         
     def forward(self, x):
         x = self.blocks(x)
@@ -57,6 +57,13 @@ class SE_ResNet(nn.Module):
         x = x.view(x.size(0), -1)
         out = self.fc(x)
         return out
+    
+#Define focal loss    
+def focal(outputs,targets,alpha=1,gamma=2):
+    ce_loss = F.cross_entropy(outputs, targets, reduction='none') # important to add reduction='none' to keep per-batch-item loss
+    pt = torch.exp(-ce_loss)
+    focal_loss = (alpha * (1-pt)**gamma * ce_loss).mean() # mean over the batch
+    return focal_loss
     
 #Define the training as a function.
 def train(model, optimizer, num_epochs=10):
@@ -74,7 +81,7 @@ def train(model, optimizer, num_epochs=10):
             #Forward pass your image through the network
             output = model(data)
             #Compute the loss
-            loss = F.nll_loss(torch.log(output), target)
+            loss = focal(output,target) #F.nll_loss(torch.log(output), target)
             #Backward pass through the network
             loss.backward()
             #Update the weights
@@ -95,8 +102,8 @@ def train(model, optimizer, num_epochs=10):
                 output = model(data)
             predicted = output.argmax(1).cpu()
             test_correct += (target==predicted).sum().item()
-        train_acc = train_correct/len(train_set)
-        test_acc = test_correct/len(test_set)
+        train_acc = train_correct/len(trainset)
+        test_acc = test_correct/len(testset)
         train_acc_all.append(train_acc)
         test_acc_all.append(test_acc)
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
@@ -109,4 +116,10 @@ model.to(device)
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(),lr=1e-3)
 #run the training loop
-train(model,optimizer,num_epochs=1)
+test_acc_all,train_acc_all = train(model,optimizer,num_epochs=10)
+
+#Save model
+today = datetime.today()
+torch.save(model.state_dict(), '../Models/SEResNet-{date}'.format(date=today.strftime("%I%p-%d-%h")))
+np.save('../Models/test_res_{}'.format(today.strftime("%I%p-%d-%h")),test_acc_all)
+np.save('../Models/train_res_{}'.format(today.strftime("%I%p-%d-%h")),train_acc_all)
