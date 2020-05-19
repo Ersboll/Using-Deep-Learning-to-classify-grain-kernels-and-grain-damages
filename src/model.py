@@ -43,6 +43,6 @@ class SE_ResNetBlock(nn.Module):
         se = self.fc2(se)
         se = self.gate(se)
         
-        out = out.mul(se.unsqueeze(-1).unsqueeze(-1))+identity
+        out = (out*se)+identity
         out = self.activation(out)
         return out
