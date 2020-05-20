@@ -117,7 +117,7 @@ model.to(device)
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(),lr=1e-3)
 #run the training loop
-test_acc_all,train_acc_all = train(model,optimizer,num_epochs=10)
+test_acc_all,train_acc_all = train(model,optimizer,num_epochs=400)
 
 #Save model
 today = datetime.today()
