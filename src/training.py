@@ -8,9 +8,9 @@ import torch.nn.functional as F
 from datetime import datetime
 
 if torch.cuda.is_available():
-    print("The code will run on GPU. This is important so things run faster.")
+    print("The code will run on GPU.")
 else:
-    print("The code will run on CPU. You should probably not do this.")
+    print("The code will run on CPU.")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -93,6 +93,7 @@ def train(model, optimizer, num_epochs=10):
             
             #Remove mini-batch from memory
             del data, target, loss
+#             print("mini-batch done")
         #Comput the test accuracy
         test_correct = 0
         model.eval()
@@ -102,8 +103,8 @@ def train(model, optimizer, num_epochs=10):
                 output = model(data)
             predicted = output.argmax(1).cpu()
             test_correct += (target==predicted).sum().item()
-        train_acc = train_correct/len(trainset)
-        test_acc = test_correct/len(testset)
+        train_acc = train_correct/len(train_set)
+        test_acc = test_correct/len(test_set)
         train_acc_all.append(train_acc)
         test_acc_all.append(test_acc)
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
@@ -111,7 +112,7 @@ def train(model, optimizer, num_epochs=10):
 
 
 #create model and sent to device
-model = SE_ResNet(n_in=7,n_features=8).double()
+model = SE_ResNet(n_in=7,n_features=8).float()
 model.to(device)
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(),lr=1e-3)
