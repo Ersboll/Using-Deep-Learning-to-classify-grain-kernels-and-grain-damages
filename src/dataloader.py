@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 import glob
 import torch
@@ -15,9 +14,9 @@ class dataset (Dataset):
     def __init__(self,train,size,data_path='../data'):  
         self.size = size
         data_path = os.path.join(data_path, 'train' if train else 'test')
-        image_classes = [os.path.split(d)[1] for d in glob.glob(data_path +'/*') if os.path.isdir(d)]
-        image_classes.sort()
-        self.name_to_label = {c: id for id, c in enumerate(image_classes)}
+        self.image_classes = [os.path.split(d)[1] for d in glob.glob(data_path +'/*') if os.path.isdir(d)]
+        self.image_classes.sort()
+        self.name_to_label = {c: id for id, c in enumerate(self.image_classes)}
         self.image_paths = glob.glob(data_path + '/*/*.npy')
     
     def __len__(self):
@@ -48,35 +47,44 @@ class dataset (Dataset):
     
     def get_image_paths(self):
         return self.image_paths
+    
+    def get_image_classes(self):
+        return self.image_classes
 
-size=(64,128)
-train_set = dataset(train=True,size=size)
-test_set = dataset(train=False,size=size)
+def make_dataloaders(height=128,width=64,batch_size=512):
+    """
+    Creates a train and test dataloader with a variable batch size and image shape.
+    And using a weighted sampler for the training dataloader to have balanced mini-batches when training.
+    """
+    size=(width,height)
+    train_set = dataset(train=True,size=size)
+    test_set = dataset(train=False,size=size)
+    
+    weights = []
 
-batch_size = 512
-weights = []
+    train_paths = train_set.get_image_paths()
+    oat_length = len(os.listdir('../data/train/Oat'))
+    wheat_length = len(os.listdir('../data/train/Wheat'))
+    rye_length = len(os.listdir('../data/train/Rye'))
+    broken_length = len(os.listdir('../data/train/Broken'))
+    barley_length = len(os.listdir('../data/train/Barley'))
 
-train_paths = train_set.get_image_paths()
-oat_length = len(os.listdir('../data/train/Oat'))
-wheat_length = len(os.listdir('../data/train/Wheat'))
-rye_length = len(os.listdir('../data/train/Rye'))
-broken_length = len(os.listdir('../data/train/Broken'))
-barley_length = len(os.listdir('../data/train/Barley'))
+    for file in train_paths:
+        label = os.path.split(os.path.split(file)[0])[1]
+        if label == 'Oat':
+            weights.append(0.2/oat_length)
+        elif label == "Wheat":
+            weights.append(0.2/wheat_length)
+        elif label == "Rye":
+            weights.append(0.2/rye_length)
+        elif label == "Broken":
+            weights.append(0.2/broken_length)
+        else:
+            weights.append(0.2/barley_length)
+    weights = torch.FloatTensor(weights)
+    sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True)
 
-for file in train_paths:
-    label = os.path.split(os.path.split(file)[0])[1]
-    if label == 'Oat':
-        weights.append(0.2/oat_length)
-    elif label == "Wheat":
-        weights.append(0.2/wheat_length)
-    elif label == "Rye":
-        weights.append(0.2/rye_length)
-    elif label == "Broken":
-        weights.append(0.2/broken_length)
-    else:
-        weights.append(0.2/barley_length)
-weights = torch.FloatTensor(weights)
-sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True)
-
-train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4, pin_memory=True)
-test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,num_workers=4, pin_memory=True)
+    
+    return train_loader,test_loader

@@ -1,16 +1,7 @@
-from model import SE_ResNet
-from dataloader import *
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
-from datetime import datetime
-
-if torch.cuda.is_available():
-    print("The code will run on GPU.")
-else:
-    print("The code will run on CPU.")
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+import wandb
     
 #Define focal loss    
 def focal(outputs,targets,alpha=1,gamma=2):
@@ -20,10 +11,11 @@ def focal(outputs,targets,alpha=1,gamma=2):
     return focal_loss
     
 #Define the training as a function.
-def train(model, optimizer, num_epochs=10):
-    train_acc_all = []
-    test_acc_all = []
-
+def train(model, optimizer, train_loader, test_loader, device, num_epochs=10):
+#     train_acc_all = []
+#     test_acc_all = []
+    classes = test_loader.dataset.get_image_classes()
+    
     for epoch in range(num_epochs):
         model.train()
         #For each epoch
@@ -47,34 +39,42 @@ def train(model, optimizer, num_epochs=10):
             
             #Remove mini-batch from memory
             del data, target, loss
-#             print("mini-batch done")
+            print("mini-batch done")
         #Comput the test accuracy
         test_correct = 0
         model.eval()
+        class_correct = list(0. for i in range(len(classes)))
+        class_total = list(0. for i in range(len(classes)))
         for data, target in test_loader:
             data = data.to(device)
             with torch.no_grad():
                 output = model(data)
             predicted = output.argmax(1).cpu()
-            test_correct += (target==predicted).sum().item()
+            
+            test_correct += (target == predicted).sum().item()
+            
+            c = (predicted == target).squeeze()
+            for i in range(batch_size):
+                label = labels[i]
+                class_correct[label] += c[i].item()
+                class_total[label] += 1
+                
+        for i in range(len(classes)):
+            print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))
+            class_acc["Accuracy of %5s" % (classes[i])] = 100 * class_correct[i] / class_total[i]
+            
+        wandb.log(class_acc)
+        
         train_acc = train_correct/len(train_set)
         test_acc = test_correct/len(test_set)
-        train_acc_all.append(train_acc)
-        test_acc_all.append(test_acc)
+        
+        overall_acc["Accuracy of train"] = train_acc
+        overall_acc["Accuracy of test"] = test_acc
+        wandb.log(overall_acc)
+        
+#         train_acc_all.append(train_acc)
+#         test_acc_all.append(test_acc)
+        
+        
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
-    return test_acc_all, train_acc_all
-
-
-#create model and sent to device
-model = SE_ResNet(n_in=7,n_features=8,image_size=size).float()
-model.to(device)
-#initialise optimiser
-optimizer = optim.SGD(model.parameters(),lr=1e-3)
-#run the training loop
-test_acc_all,train_acc_all = train(model,optimizer,num_epochs=400)
-
-#Save model
-today = datetime.today()
-torch.save(model.state_dict(), '../Models/SEResNet-{date}'.format(date=today.strftime("%I%p-%d-%h")))
-np.save('../Models/test_res_{}'.format(today.strftime("%I%p-%d-%h")),test_acc_all)
-np.save('../Models/train_res_{}'.format(today.strftime("%I%p-%d-%h")),train_acc_all)
+#     return test_acc_all, train_acc_all
