@@ -6,9 +6,9 @@ import torch.optim as optim
 from datetime import datetime
 from training import train
 from dataloader import make_dataloaders
-import wandb
+# import wandb
 
-wandb.init()
+# wandb.init()
 
 # batch_size = $1
 # num_epochs = $2
@@ -61,15 +61,15 @@ elif model_choice == "ConvNet":
 else:
     sys.exit("The chosen model isn't valid")
     
-wandb.watch(model)
+# wandb.watch(model)
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(),lr=1e-3)
 #run the training loop
 train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
-# test_acc_all,train_acc_all = train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
+test_acc_all,train_acc_all = train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
 
 #Save model
 today = datetime.today()
 torch.save(model.state_dict(), '../Models/{model_choice}_{date}'.format(model_choice=model_choice, date=today.strftime("%I%p-%d-%h")))
-# np.save('../Models/{model_choice}_test_res_{date}'.format(model_choice=model_choice, date=today.strftime("%I%p-%d-%h")),test_acc_all)
-# np.save('../Models/{model_choice}_train_res_{date}'.format(model_choice=model_choice, date=today.strftime("%I%p-%d-%h")),train_acc_all)
+np.save('../Models/{model_choice}_test_res_{date}'.format(model_choice=model_choice, date=today.strftime("%I%p-%d-%h")),test_acc_all)
+np.save('../Models/{model_choice}_train_res_{date}'.format(model_choice=model_choice, date=today.strftime("%I%p-%d-%h")),train_acc_all)

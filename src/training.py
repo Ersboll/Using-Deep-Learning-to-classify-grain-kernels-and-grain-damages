@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import wandb
+# import wandb
     
 #Define focal loss    
 def focal(outputs,targets,alpha=1,gamma=2):
@@ -12,8 +12,8 @@ def focal(outputs,targets,alpha=1,gamma=2):
     
 #Define the training as a function.
 def train(model, optimizer, train_loader, test_loader, device, num_epochs=10):
-#     train_acc_all = []
-#     test_acc_all = []
+    train_acc_all = []
+    test_acc_all = []
     classes = test_loader.dataset.get_image_classes()
     
     for epoch in range(num_epochs):
@@ -61,20 +61,21 @@ def train(model, optimizer, train_loader, test_loader, device, num_epochs=10):
                 
         for i in range(len(classes)):
             print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))
-            class_acc["Accuracy of %5s" % (classes[i])] = 100 * class_correct[i] / class_total[i]
+#             class_acc["Accuracy of %5s" % (classes[i])] = 100 * class_correct[i] / class_total[i]
             
-        wandb.log(class_acc)
+#         wandb.log(class_acc)
         
         train_acc = train_correct/len(train_set)
         test_acc = test_correct/len(test_set)
         
-        overall_acc["Accuracy of train"] = train_acc
-        overall_acc["Accuracy of test"] = test_acc
-        wandb.log(overall_acc)
         
-#         train_acc_all.append(train_acc)
-#         test_acc_all.append(test_acc)
+#         overall_acc["Accuracy of train"] = train_acc
+#         overall_acc["Accuracy of test"] = test_acc
+#         wandb.log(overall_acc)
+        
+        train_acc_all.append(train_acc)
+        test_acc_all.append(test_acc)
         
         
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
-#     return test_acc_all, train_acc_all
+    return test_acc_all, train_acc_all
