@@ -10,27 +10,20 @@ from dataloader import make_dataloaders
 
 # wandb.init()
 
-# batch_size = $1
-# num_epochs = $2
-# model_choice = $3
-# n_features = $4
-# height = $5
-# width = $6
-# droprate = $7
-# num_blocks = $8
-# r = $9
-
 #Define hyperparameters and model
-batch_size = 512
-num_epochs = 10
-model_choice = "SE_ResNet" #"ResNet" "ConvNet"
-n_features = 16
-height = 128
-width = 64
-droprate = 0.5
+batch_size = int(sys.argv[3]) 
+num_epochs = int(sys.argv[2])
+model_choice = sys.argv[1] #"SE_ResNet" #"ResNet" "ConvNet"
+n_features = int(sys.argv[7])
+height = int(sys.argv[4])
+width = int(sys.argv[5])
+droprate = float(sys.argv[6])
 num_blocks = 3
 r = 16
 
+for i in range(len(sys.argv)-1):
+	print(sys.argv[i])
+	
 if torch.cuda.is_available():
     print("The code will run on GPU.")
 else:
@@ -65,7 +58,7 @@ else:
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(),lr=1e-3)
 #run the training loop
-train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
+#train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
 test_acc_all,train_acc_all = train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
 
 #Save model

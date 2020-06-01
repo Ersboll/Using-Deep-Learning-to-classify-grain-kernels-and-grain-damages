@@ -47,7 +47,7 @@ class SE_ResNet(nn.Module):
 #Define Residual network
 class ResNet(nn.Module):
     def __init__(self, n_in, n_features, height, width, droprate, num_blocks=3):
-        super(SE_ResNet, self).__init__()
+        super(ResNet, self).__init__()
         #First conv layers needs to output the desired number of features.
         conv_layers =[nn.Conv2d(n_in, n_features, kernel_size=3, stride=1, padding=1),
                       nn.Dropout(p=droprate),
@@ -89,7 +89,7 @@ class ResNet(nn.Module):
 #Define convolutional network
 class ConvNet(nn.Module):
     def __init__(self, n_in, n_features, height, width, droprate):
-        super(SE_ResNet, self).__init__()
+        super(ConvNet, self).__init__()
         
         self.conv1 = nn.Sequential(nn.Conv2d(n_in, n_features, kernel_size=3, stride=1, padding=1),                                                          
                                    nn.BatchNorm2d(n_features),
@@ -119,7 +119,7 @@ class ConvNet(nn.Module):
                                 nn.Linear(512,5))
         
     def forward(self, x):
-        x = self.blocks(x)
+        x = self.conv1(x)
         #reshape x so it becomes flat, except for the first dimension (which is the minibatch)
         x = x.view(x.size(0), -1)
         out = self.fc(x)

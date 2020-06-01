@@ -39,7 +39,7 @@ def train(model, optimizer, train_loader, test_loader, device, num_epochs=10):
             
             #Remove mini-batch from memory
             del data, target, loss
-            print("mini-batch done")
+#            print("mini-batch done")
         #Comput the test accuracy
         test_correct = 0
         model.eval()
@@ -54,8 +54,8 @@ def train(model, optimizer, train_loader, test_loader, device, num_epochs=10):
             test_correct += (target == predicted).sum().item()
             
             c = (predicted == target).squeeze()
-            for i in range(batch_size):
-                label = labels[i]
+            for i in range(data.shape[0]):
+                label = target[i]
                 class_correct[label] += c[i].item()
                 class_total[label] += 1
                 
@@ -65,8 +65,8 @@ def train(model, optimizer, train_loader, test_loader, device, num_epochs=10):
             
 #         wandb.log(class_acc)
         
-        train_acc = train_correct/len(train_set)
-        test_acc = test_correct/len(test_set)
+        train_acc = train_correct/len(train_loader.dataset)
+        test_acc = test_correct/len(test_loader.dataset)
         
         
 #         overall_acc["Accuracy of train"] = train_acc
