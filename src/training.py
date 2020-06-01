@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# import wandb
-    
+from torch.utils.tensorboard import SummaryWriter
+import datatime
+  
 #Define focal loss    
 def focal(outputs,targets,alpha=1,gamma=2):
     ce_loss = F.cross_entropy(outputs, targets, reduction='none') # important to add reduction='none' to keep per-batch-item loss
@@ -11,15 +12,15 @@ def focal(outputs,targets,alpha=1,gamma=2):
     return focal_loss
     
 #Define the training as a function.
-def train(model, optimizer, scheduler, train_loader, test_loader, device, num_epochs=10):
+def train(model, optimizer, scheduler, train_loader, test_loader, device, num_epochs=10, model_choice, **kwargs):
     train_acc_all = []
     test_acc_all = []
     classes = test_loader.dataset.get_image_classes()
-    
+    writer = SummaryWriter(logdir=../logs/"../logs/train/" +model_choice", comment=datetime.datetime.today.strftime("%I%p-%d-%h"))
     for epoch in range(num_epochs):
         model.train()
         #For each epoch
-        train_correct = 0
+        train_correct = 0s
         for minibatch_no, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
             #Zero the gradients computed for each weight
@@ -69,7 +70,15 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, num_ep
         
         train_acc = train_correct/len(train_loader.dataset)
         test_acc = test_correct/len(test_loader.dataset)
-        
+		writer.add_scalar('Train accuracy', train_acc, epoch)
+        writer.add_scalar('Test accuracy', test_acc, epoch)
+        writer.add_scalar('Barley accuracy', 100 * class_correct[0] / class_total[0], epoch)
+        writer.add_scalar('Broken accuracy', 100 * class_correct[1] / class_total[1], epoch)
+		writer.add_scalar('Oat accuracy', 100 * class_correct[2] / class_total[2], epoch)
+        writer.add_scalar('Rye accuracy', 100 * class_correct[3] / class_total[3], epoch)
+        writer.add_scalar('Wheat accuracy', 100 * class_correct[4] / class_total[4], epoch)
+        writer.add_hparams(metric_dict=metric_params)
+
         
 #         overall_acc["Accuracy of train"] = train_acc
 #         overall_acc["Accuracy of test"] = test_acc
