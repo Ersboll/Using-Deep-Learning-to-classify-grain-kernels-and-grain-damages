@@ -14,16 +14,17 @@ from dataloader import make_dataloaders
 batch_size = int(sys.argv[3]) 
 num_epochs = int(sys.argv[2])
 model_choice = sys.argv[1] #"SE_ResNet" #"ResNet" "ConvNet"
-n_features = int(sys.argv[7])
-height = int(sys.argv[4])
-width = int(sys.argv[5])
-droprate = float(sys.argv[6])
+n_features = int(sys.argv[8])
+height = int(sys.argv[5])
+width = int(sys.argv[6])
+droprate = float(sys.argv[7])
+lr = float(sys.argv[4])
 num_blocks = 3
 r = 16
 
 for i in range(len(sys.argv)-1):
-	print(sys.argv[i])
-	
+    print(sys.argv[i])
+
 if torch.cuda.is_available():
     print("The code will run on GPU.")
 else:
@@ -56,10 +57,11 @@ else:
     
 # wandb.watch(model)
 #initialise optimiser
-optimizer = optim.SGD(model.parameters(),lr=1e-3)
+optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, dampening=0.25)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
 #run the training loop
 #train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
-test_acc_all,train_acc_all = train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
+test_acc_all,train_acc_all = train(model, optimizer, scheduler, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
 
 #Save model
 today = datetime.today()

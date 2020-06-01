@@ -11,7 +11,7 @@ def focal(outputs,targets,alpha=1,gamma=2):
     return focal_loss
     
 #Define the training as a function.
-def train(model, optimizer, train_loader, test_loader, device, num_epochs=10):
+def train(model, optimizer, scheduler, train_loader, test_loader, device, num_epochs=10):
     train_acc_all = []
     test_acc_all = []
     classes = test_loader.dataset.get_image_classes()
@@ -58,6 +58,8 @@ def train(model, optimizer, train_loader, test_loader, device, num_epochs=10):
                 label = target[i]
                 class_correct[label] += c[i].item()
                 class_total[label] += 1
+                
+        scheduler.step()
                 
         for i in range(len(classes)):
             print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))
