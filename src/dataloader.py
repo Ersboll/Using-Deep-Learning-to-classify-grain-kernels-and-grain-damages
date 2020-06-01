@@ -30,14 +30,12 @@ class dataset (Dataset):
         y = self.name_to_label[c]
 
         image = image[:,:,:7]
+
         #create a simple mask, and make everything else 0
-        mask = image[:,:,4].copy()
-        #fix divide by zero
-#         mask[image[:,:,4]/image[:,:,1] < 1] = 0 
-#         mask[image[:,:,4]/image[:,:,1] >= 1] = 1
-        
+        mask = image[:,:,4].copy()        
         mask[image[:,:,4] < 35] = 0 
         mask[image[:,:,4] >= 35] = 1
+        mask[:5,:5] = 0
         image[mask==0] = 0
         
         image = cv2.resize(image,self.size,interpolation=cv2.INTER_LINEAR)
