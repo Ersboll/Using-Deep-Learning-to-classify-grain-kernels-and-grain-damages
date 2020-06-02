@@ -17,7 +17,7 @@ class SE_ResNet(nn.Module):
                       nn.ReLU()]
         
         for i in range(num_blocks):
-            conv_layers.append(SE_ResNetBlock(2*n_features,r))
+            conv_layers.append(SE_ResNetBlock(2*n_features,droprate,r))
             
         conv_layers.append(nn.Sequential(nn.MaxPool2d(2,2),
                                          nn.Conv2d(2*n_features, 4*n_features, kernel_size=3, stride=1, padding=1),
@@ -25,7 +25,7 @@ class SE_ResNet(nn.Module):
                                          nn.ReLU())) #Reduce image size by half
         
         for i in range(num_blocks):
-            conv_layers.append(SE_ResNetBlock(4*n_features,r))
+            conv_layers.append(SE_ResNetBlock(4*n_features,droprate,r))
             
         self.blocks = nn.Sequential(*conv_layers)
         
@@ -59,7 +59,7 @@ class ResNet(nn.Module):
                      ]
         
         for i in range(num_blocks):
-            conv_layers.append(ResNetBlock(2*n_features))
+            conv_layers.append(ResNetBlock(2*n_features,droprate))
             
         conv_layers.append(nn.Sequential(nn.MaxPool2d(2,2),
                                          nn.Conv2d(2*n_features, 4*n_features, kernel_size=3, stride=1, padding=1),
@@ -67,7 +67,7 @@ class ResNet(nn.Module):
                                          nn.ReLU())) #Reduce image size by half
         
         for i in range(num_blocks):
-            conv_layers.append(ResNetBlock(4*n_features))
+            conv_layers.append(ResNetBlock(4*n_features,droprate))
             
         self.blocks = nn.Sequential(*conv_layers)
         

@@ -39,7 +39,7 @@ class dataset (Dataset):
         image[mask==0] = 0
         
         image = cv2.resize(image,self.size,interpolation=cv2.INTER_LINEAR)
-
+        
         X = transforms.functional.to_tensor(image)
         return X,y
     
