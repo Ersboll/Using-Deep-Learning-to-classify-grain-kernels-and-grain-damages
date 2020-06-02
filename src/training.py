@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-# import wandb
-    
+from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
+  
 #Define focal loss    
 def focal(outputs,targets,alpha=1,gamma=2):
     ce_loss = F.cross_entropy(outputs, targets, reduction='none') # important to add reduction='none' to keep per-batch-item loss
@@ -11,11 +12,12 @@ def focal(outputs,targets,alpha=1,gamma=2):
     return focal_loss
     
 #Define the training as a function.
-def train(model, optimizer, scheduler, train_loader, test_loader, device, num_epochs=10):
+def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_size='128', num_epochs=1, model_choice='ConvNet', n_features=16, height=256, width=128, droprate=0.5, lr=0.1, num_blocks=3, r='r'):
     train_acc_all = []
     test_acc_all = []
     classes = test_loader.dataset.get_image_classes()
-    
+    today = datetime.today()
+    writer = SummaryWriter(log_dir="../logs/" + model_choice, comment=today.strftime("%I%p-%d-%h"))
     for epoch in range(num_epochs):
         model.train()
         #For each epoch
@@ -69,7 +71,14 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, num_ep
         
         train_acc = train_correct/len(train_loader.dataset)
         test_acc = test_correct/len(test_loader.dataset)
-        
+        writer.add_scalar('Train accuracy', train_acc, epoch)
+        writer.add_scalar('Test accuracy', test_acc, epoch)
+        writer.add_scalar('Barley accuracy', 100 * class_correct[0] / class_total[0], epoch)
+        writer.add_scalar('Broken accuracy', 100 * class_correct[1] / class_total[1], epoch)
+        writer.add_scalar('Oat accuracy', 100 * class_correct[2] / class_total[2], epoch)
+        writer.add_scalar('Rye accuracy', 100 * class_correct[3] / class_total[3], epoch)
+        writer.add_scalar('Wheat accuracy', 100 * class_correct[4] / class_total[4], epoch)
+
         
 #         overall_acc["Accuracy of train"] = train_acc
 #         overall_acc["Accuracy of test"] = test_acc
@@ -80,4 +89,5 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, num_ep
         
         
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
+    writer.add_hparams({'Batch_Size':batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r}, {'hparams/Train_Accuracy': train_acc, 'hparams/Test_Accuracy': test_acc})
     return test_acc_all, train_acc_all
