@@ -89,5 +89,5 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
         
         
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
-    writer.add_hparams({'Batch_Size':Batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r}, {'hparams/Train_Accuracy': train_acc, 'hparams/Test_Accuracy': test_acc})
+    writer.add_hparams({'Batch_Size':batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r}, {'hparams/Train_Accuracy': train_acc, 'hparams/Test_Accuracy': test_acc})
     return test_acc_all, train_acc_all
