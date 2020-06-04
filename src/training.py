@@ -16,8 +16,8 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
     train_acc_all = []
     test_acc_all = []
     classes = test_loader.dataset.get_image_classes()
-    today = datetime.today()
-    writer = SummaryWriter(log_dir="../logs/" + model_choice, comment=today.strftime("%I%p-%d-%h"))
+    comment = f' model_choice={model_choice} lr={lr} droprate={droprate} blocks={num_blocks} features={n_features}'
+    writer = SummaryWriter(log_dir="../logs/",comment=comment)
     for epoch in range(num_epochs):
         model.train()
         #For each epoch
@@ -29,7 +29,7 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
             #Forward pass your image through the network
             output = model(data)
             #Compute the loss
-            loss = focal(output,target) #F.nll_loss(torch.log(output), target)
+            loss = F.cross_entropy(output,target) #focal(output,target) #F.nll_loss(torch.log(output), target)
             #Backward pass through the network
             loss.backward()
             #Update the weights
@@ -64,10 +64,8 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
         scheduler.step()
                 
         for i in range(len(classes)):
-            print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))
-#             class_acc["Accuracy of %5s" % (classes[i])] = 100 * class_correct[i] / class_total[i]
-            
-#         wandb.log(class_acc)
+            print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))            
+
         
         train_acc = train_correct/len(train_loader.dataset)
         test_acc = test_correct/len(test_loader.dataset)
@@ -78,11 +76,6 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
         writer.add_scalar('Oat accuracy', 100 * class_correct[2] / class_total[2], epoch)
         writer.add_scalar('Rye accuracy', 100 * class_correct[3] / class_total[3], epoch)
         writer.add_scalar('Wheat accuracy', 100 * class_correct[4] / class_total[4], epoch)
-
-        
-#         overall_acc["Accuracy of train"] = train_acc
-#         overall_acc["Accuracy of test"] = test_acc
-#         wandb.log(overall_acc)
         
         train_acc_all.append(train_acc)
         test_acc_all.append(test_acc)

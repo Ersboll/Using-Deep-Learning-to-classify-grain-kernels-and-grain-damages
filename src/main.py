@@ -6,9 +6,6 @@ import torch.optim as optim
 from datetime import datetime
 from training import train
 from dataloader import make_dataloaders
-# import wandb
-
-# wandb.init()
 
 #Define hyperparameters and model
 batch_size = int(sys.argv[3]) 
@@ -19,7 +16,7 @@ height = int(sys.argv[5])
 width = int(sys.argv[6])
 droprate = float(sys.argv[7])
 lr = float(sys.argv[4])
-num_blocks = 3
+num_blocks = int(sys.argv[9]) #3
 r = 16
 
 metric_params = dict(batch_size=batch_size,
@@ -35,7 +32,7 @@ metric_params = dict(batch_size=batch_size,
     )
  
 
-for i in range(len(sys.argv)-1):
+for i in range(len(sys.argv)):
     print(sys.argv[i])
 
 if torch.cuda.is_available():
@@ -68,7 +65,6 @@ elif model_choice == "ConvNet":
 else:
     sys.exit("The chosen model isn't valid")
     
-# wandb.watch(model)
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, dampening=0.25)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=25, gamma=0.1)
