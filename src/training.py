@@ -16,8 +16,8 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
     train_acc_all = []
     test_acc_all = []
     classes = test_loader.dataset.get_image_classes()
-    comment = f' model_choice={model_choice} lr={lr} droprate={droprate} blocks={num_blocks} features={n_features}'
-    writer = SummaryWriter(log_dir="../logs/",comment=comment)
+    writer = SummaryWriter(log_dir="../logs/" + 
+    datetime.today().strftime('%d-%m-%y:%H%M') + f' {model_choice} lr={lr} droprate={droprate} blocks={num_blocks} features={n_features} height={height}')
     for epoch in range(num_epochs):
         model.train()
         #For each epoch
@@ -66,21 +66,21 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
         for i in range(len(classes)):
             print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))            
 
-        
+        Barley_Acc = 100 * class_correct[0] / class_total[0]
+        Broken_Acc = 100 * class_correct[1] / class_total[1]
+        Oat_Acc = 100 * class_correct[2] / class_total[2]
+        Rye_Acc = 100 * class_correct[3] / class_total[3]
+        Wheat_Acc = 100 * class_correct[4] / class_total[4]
+
         train_acc = train_correct/len(train_loader.dataset)
         test_acc = test_correct/len(test_loader.dataset)
-        writer.add_scalar('Train accuracy', train_acc, epoch)
-        writer.add_scalar('Test accuracy', test_acc, epoch)
-        writer.add_scalar('Barley accuracy', 100 * class_correct[0] / class_total[0], epoch)
-        writer.add_scalar('Broken accuracy', 100 * class_correct[1] / class_total[1], epoch)
-        writer.add_scalar('Oat accuracy', 100 * class_correct[2] / class_total[2], epoch)
-        writer.add_scalar('Rye accuracy', 100 * class_correct[3] / class_total[3], epoch)
-        writer.add_scalar('Wheat accuracy', 100 * class_correct[4] / class_total[4], epoch)
+        writer.add_scalars('Train_Test_Accuracies', {'Train_Accuracy':train_acc, 'Test_Accuracy':test_acc}, epoch)
+        writer.add_scalars('Class_Accuracies', {'Barley':Barley_Acc, 'Broken':Broken_Acc, 'Oat':Oat_Acc, 'Rye':Rye_Acc, 'Wheat':Wheat_Acc}, epoch)
         
         train_acc_all.append(train_acc)
         test_acc_all.append(test_acc)
         
         
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
-    writer.add_hparams({'Batch_Size':batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r}, {'hparams/Train_Accuracy': train_acc, 'hparams/Test_Accuracy': test_acc})
+    writer.add_hparams({'Batch_Size':batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r}, {'hparam/Barley':Barley_Acc, 'hparam/Broken':Broken_Acc, 'hparam/Oat_Acc':Oat_Acc, 'hparam/Rye':Rye_Acc, 'hparam/Wheat':Wheat_Acc, 'hparam/Train_Accuracy':train_acc, 'hparam/Test_Accuracy':test_acc})
     return test_acc_all, train_acc_all
