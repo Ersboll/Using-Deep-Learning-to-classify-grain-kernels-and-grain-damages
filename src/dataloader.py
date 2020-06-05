@@ -41,6 +41,10 @@ class dataset (Dataset):
         image = cv2.resize(image,self.size,interpolation=cv2.INTER_LINEAR)
         
         X = transforms.functional.to_tensor(image)
+        
+        for i in range(X.shape[0]):
+            X[i,:,:] = X[i,:,:]/torch.max(X[i,:,:])
+            
         return X,y
     
     def get_image_paths(self):
@@ -83,6 +87,8 @@ def make_dataloaders(height=128,width=64,batch_size=512):
     sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True)
 
     train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4, pin_memory=True)
+    
+#     train_loader = DataLoader(train_set, batch_size=batch_size,shuffle=True,num_workers=4, pin_memory=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,num_workers=4, pin_memory=True)
     
     return train_loader,test_loader
