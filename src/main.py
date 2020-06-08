@@ -66,7 +66,7 @@ else:
     sys.exit("The chosen model isn't valid")
     
 #initialise optimiser
-optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, dampening=0.25)
+optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, dampening=0.05)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(num_epochs/2), gamma=0.1)
 #run the training loop
 #train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)

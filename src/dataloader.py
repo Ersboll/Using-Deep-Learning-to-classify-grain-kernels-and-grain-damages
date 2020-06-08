@@ -11,8 +11,9 @@ import torchvision.transforms as transforms
 import cv2
 
 class dataset (Dataset):
-    def __init__(self,train,size,data_path='../data'):  
-        self.size = size
+    def __init__(self,train,height,width,data_path='../data'):  
+        self.height = height
+        self.width = width
         data_path = os.path.join(data_path, 'train' if train else 'test')
         self.image_classes = [os.path.split(d)[1] for d in glob.glob(data_path +'/*') if os.path.isdir(d)]
         self.image_classes.sort()
@@ -38,14 +39,40 @@ class dataset (Dataset):
         mask[:5,:5] = 0
         image[mask==0] = 0
         
-        image = cv2.resize(image,self.size,interpolation=cv2.INTER_LINEAR)
+        #scale the image up to batch_size and pad remaining
+        hscaler = self.height/image.shape[0]
+        wscaler = self.width/image.shape[1]
+        scaler = np.zeros(2)
+        if hscaler > wscaler:
+            image = cv2.resize(image,dsize=(0,0),fx=wscaler,fy=wscaler,interpolation=cv2.INTER_LINEAR)
+            pad = self.height - image.shape[0]
+            top = int(np.floor(pad * 0.5))
+            bottom = int(pad-top)
+            image = np.pad(image, ((top,bottom),(0,0),(0,0)), 'constant', constant_values=(0,0))
+            scaler[1] = wscaler 
+            
+        elif hscaler < wscaler:
+            image = cv2.resize(image,dsize=(0,0),fx=hscaler,fy=hscaler,interpolation=cv2.INTER_LINEAR)
+            pad = self.width - image.shape[1]
+            left = int(np.floor(pad * 0.5))
+            right = int(pad-left)
+            image = np.pad(image, ((0,0),(left,right),(0,0)), 'constant', constant_values=(0,0))
+            scaler[0] = hscaler
+        else:
+            #Perfect fit no padding needed
+            image = cv2.resize(image,dsize=(0,0),fx=wscaler,fy=hscaler,interpolation=cv2.INTER_LINEAR)
+            scaler[0] = hscaler
+        
+        #image = cv2.resize(image,self.size,interpolation=cv2.INTER_LINEAR)
         
         X = transforms.functional.to_tensor(image)
         
         for i in range(X.shape[0]):
             X[i,:,:] = X[i,:,:]/torch.max(X[i,:,:])
-            
-        return X,y
+        
+        scaler = torch.from_numpy(scaler).float()
+        
+        return X,y,scaler
     
     def get_image_paths(self):
         return self.image_paths
@@ -59,8 +86,8 @@ def make_dataloaders(height=128,width=64,batch_size=512):
     And using a weighted sampler for the training dataloader to have balanced mini-batches when training.
     """
     size=(width,height)
-    train_set = dataset(train=True,size=size)
-    test_set = dataset(train=False,size=size)
+    train_set = dataset(train=True,height=height,width=width)
+    test_set = dataset(train=False,height=height,width=width)
     
     weights = []
 
@@ -87,7 +114,7 @@ def make_dataloaders(height=128,width=64,batch_size=512):
     sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True)
 
     train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4, pin_memory=True)
-    
+
 #     train_loader = DataLoader(train_set, batch_size=batch_size,shuffle=True,num_workers=4, pin_memory=True)
     test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,num_workers=4, pin_memory=True)
     

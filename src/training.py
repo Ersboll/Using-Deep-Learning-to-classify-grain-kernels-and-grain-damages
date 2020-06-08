@@ -22,12 +22,12 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
         model.train()
         #For each epoch
         train_correct = 0
-        for minibatch_no, (data, target) in enumerate(train_loader):
-            data, target = data.to(device), target.to(device)
+        for minibatch_no, (data, target, scaler) in enumerate(train_loader):
+            data, target, scaler = data.to(device), target.to(device), scaler.to(device)
             #Zero the gradients computed for each weight
             optimizer.zero_grad()
             #Forward pass your image through the network
-            output = model(data)
+            output = model(data,scaler)
             #Compute the loss
             loss = F.cross_entropy(output,target) #focal(output,target) #F.nll_loss(torch.log(output), target)
             #Backward pass through the network
@@ -47,10 +47,10 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
         model.eval()
         class_correct = list(0. for i in range(len(classes)))
         class_total = list(0. for i in range(len(classes)))
-        for data, target in test_loader:
-            data = data.to(device)
+        for data, target,scaler in test_loader:
+            data, scaler = data.to(device), scaler.to(device)
             with torch.no_grad():
-                output = model(data)
+                output = model(data, scaler)
             predicted = output.argmax(1).cpu()
             
             test_correct += (target == predicted).sum().item()

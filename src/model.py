@@ -1,5 +1,6 @@
 # import torch
 import torch.nn as nn
+from torch import cat
 from model_blocks import SE_ResNetBlock
 from model_blocks import ResNetBlock
 
@@ -29,7 +30,7 @@ class SE_ResNet(nn.Module):
             
         self.blocks = nn.Sequential(*conv_layers)
         
-        self.fc = nn.Sequential(nn.Linear(int(height/4)*int(width/4)*4*n_features, 1024),
+        self.fc = nn.Sequential(nn.Linear(int(height/4)*int(width/4)*4*n_features+2, 1024),
                                 nn.Dropout(p=droprate),
                                 nn.ReLU(),
                                 nn.Linear(1024, 512),
@@ -37,10 +38,11 @@ class SE_ResNet(nn.Module):
                                 nn.ReLU(),
                                 nn.Linear(512,5))
         
-    def forward(self, x):
+    def forward(self, x, scaler):
         x = self.blocks(x)
         #reshape x so it becomes flat, except for the first dimension (which is the minibatch)
         x = x.view(x.size(0), -1)
+        x = cat((x,scaler),1)
         out = self.fc(x)
         return out
     
@@ -71,7 +73,7 @@ class ResNet(nn.Module):
             
         self.blocks = nn.Sequential(*conv_layers)
         
-        self.fc = nn.Sequential(nn.Linear(int(height/4)*int(width/4)*4*n_features, 1024),
+        self.fc = nn.Sequential(nn.Linear(int(height/4)*int(width/4)*4*n_features+2, 1024),
                                 nn.Dropout(p=droprate),
                                 nn.ReLU(),
                                 nn.Linear(1024, 512),
@@ -79,10 +81,11 @@ class ResNet(nn.Module):
                                 nn.ReLU(),
                                 nn.Linear(512,5))
         
-    def forward(self, x):
+    def forward(self, x, scaler):
         x = self.blocks(x)
         #reshape x so it becomes flat, except for the first dimension (which is the minibatch)
         x = x.view(x.size(0), -1)
+        x = cat((x,scaler),1)
         out = self.fc(x)
         return out
     
@@ -110,7 +113,7 @@ class ConvNet(nn.Module):
                                    nn.Dropout(p=droprate),
                                    nn.ReLU())
         
-        self.fc = nn.Sequential(nn.Linear(int(height/4)*int(width/4)*4*n_features, 1024),
+        self.fc = nn.Sequential(nn.Linear(int(height/4)*int(width/4)*4*n_features+2, 1024),
                                 nn.Dropout(p=droprate),
                                 nn.ReLU(),
                                 nn.Linear(1024, 512),
@@ -118,9 +121,10 @@ class ConvNet(nn.Module):
                                 nn.ReLU(),
                                 nn.Linear(512,5))
         
-    def forward(self, x):
+    def forward(self, x, scaler):
         x = self.conv1(x)
         #reshape x so it becomes flat, except for the first dimension (which is the minibatch)
         x = x.view(x.size(0), -1)
+        x = cat((x,scaler),1)
         out = self.fc(x)
         return out
