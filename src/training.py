@@ -19,6 +19,7 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
     writer = SummaryWriter(log_dir="../logs/" + 
     datetime.today().strftime('%d-%m-%y:%H%M') + f' {model_choice} lr={lr} droprate={droprate} blocks={num_blocks} features={n_features} height={height}')
     for epoch in range(num_epochs):
+        print(epoch)
         model.train()
         #For each epoch
         train_correct = 0
