@@ -8,7 +8,7 @@
 #BSUB -R "rusage[mem=8GB]"
 #BSUB -o ../outputs/gpu_%J.out
 #BSUB -e ../outputs/gpu_%J.err
-#BSUB -cwd "/zhome/27/c/138037/share/src/"
+###BSUB -cwd "Add own home/src directory here"
 # -- end of LSF options --
 
 nvidia-smi
