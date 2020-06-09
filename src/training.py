@@ -13,8 +13,6 @@ def focal(outputs,targets,alpha=1,gamma=2):
     
 #Define the training as a function.
 def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_size='128', num_epochs=1, model_choice='ConvNet', n_features=16, height=256, width=128, droprate=0.5, lr=0.1, num_blocks=3, r='r'):
-    train_acc_all = []
-    test_acc_all = []
     classes = test_loader.dataset.get_image_classes()
     writer = SummaryWriter(log_dir="../logs/" + 
     datetime.today().strftime('%d-%m-%y:%H%M') + f' {model_choice} lr={lr} droprate={droprate} blocks={num_blocks} features={n_features} height={height}')
@@ -78,10 +76,10 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
         writer.add_scalars('Train_Test_Accuracies', {'Train_Accuracy':train_acc, 'Test_Accuracy':test_acc}, epoch)
         writer.add_scalars('Class_Accuracies', {'Barley':Barley_Acc, 'Broken':Broken_Acc, 'Oat':Oat_Acc, 'Rye':Rye_Acc, 'Wheat':Wheat_Acc}, epoch)
         
-        train_acc_all.append(train_acc)
-        test_acc_all.append(test_acc)
-        
         
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
+        
     writer.add_hparams({'Batch_Size':batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r}, {'hparam/Barley':Barley_Acc, 'hparam/Broken':Broken_Acc, 'hparam/Oat_Acc':Oat_Acc, 'hparam/Rye':Rye_Acc, 'hparam/Wheat':Wheat_Acc, 'hparam/Train_Accuracy':train_acc, 'hparam/Test_Accuracy':test_acc})
-    return test_acc_all, train_acc_all
+    
+    #save model
+    torch.save(model.state_dict(), '../Models/{date}_{model_choice}_lr={lr}_droprate={droprate}_blocks={blocks}_features={features}_height={height}'.format(date=datetime.today().strftime('%d-%m-%y:%H%M'),model_choice=model_choice,lr=lr,droprate=droprate,blocks=num_blocks,features=n_features,height=height))
