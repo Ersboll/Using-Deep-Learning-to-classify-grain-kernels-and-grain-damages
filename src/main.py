@@ -35,6 +35,9 @@ metric_params = dict(batch_size=batch_size,
 for i in range(len(sys.argv)):
     print(sys.argv[i])
 
+torch.manual_seed(42)
+np.random.seed(42)
+
 if torch.cuda.is_available():
     print("The code will run on GPU.")
 else:

@@ -34,7 +34,7 @@ class dataset (Dataset):
         y = self.name_to_label[c]
 
         image = image[:,:,:7]
-
+        
         #create a simple mask, and make everything else 0
         mask = image[:,:,4].copy()        
         mask[image[:,:,4] < 35] = 0 
