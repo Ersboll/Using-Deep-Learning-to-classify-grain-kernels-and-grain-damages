@@ -20,6 +20,8 @@ class dataset (Dataset):
         self.image_classes.sort()
         self.name_to_label = {c: id for id, c in enumerate(self.image_classes)}
         self.image_paths = glob.glob(data_path + '/*/*.npy')
+        self.rng = np.random.default_rng(seed=None) 
+        self.train = train
     
     def __len__(self):
         return len(self.image_paths) #len(self.data)
@@ -65,9 +67,11 @@ class dataset (Dataset):
             scaler[0] = hscaler
         
         #image = cv2.resize(image,self.size,interpolation=cv2.INTER_LINEAR)
+        if self.train == True:
+            flips = lambda x: [np.fliplr(x), np.flipud(x), np.flipud(np.fliplr(x)), x]
+            image = self.rng.choice(flips(image))
         
         X = transforms.functional.to_tensor(image)
-        
         for i in range(X.shape[0]):
             X[i,:,:] = X[i,:,:]/torch.max(X[i,:,:])
         
@@ -80,6 +84,8 @@ class dataset (Dataset):
     
     def get_image_classes(self):
         return self.image_classes
+
+
 
 def make_dataloaders(height=128,width=64,batch_size=512):
     """
