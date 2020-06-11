@@ -122,7 +122,7 @@ def make_dataloaders(height=128,width=64,batch_size=256,transform=True,intensity
             else:
                 weights.append(0.2/barley_length)
         weights = torch.FloatTensor(weights)
-        sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True)
+        sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True,)
         train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4, pin_memory=True)
         
     else:
