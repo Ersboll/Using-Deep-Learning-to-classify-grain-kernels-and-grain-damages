@@ -19,8 +19,8 @@ path = os.getcwd() + '/data/train/'
 classes = ['Broken'] #[Barley, Broken, Oat, Rye, Wheat]
 
 counter = 0
-channel_min = np.zeros((7,1))
-channel_max = np.zeros((7,1))
+channel_min = np.repeat(100,6)
+channel_max = np.zeros(6)
 
 for category in classes:
 	file_paths = next(os.walk(path + '/' + category))[2]	
@@ -29,9 +29,10 @@ for category in classes:
 		counter += 1		
 		image = mask(np.load(os.path.join(path + '/' + category + '/' + file)))
 		for channel in range(6):
-			if np.min(image[:,:,channel].any()) < channel_min[channel].any():
-				channel_min[channel] = np.min(image[:,:,channel]) 
-			if np.max(image[:,:,channel].any()) > channel_max[channel].any():
+			
+			if np.min(image[image[:,:,channel] != 0.0]).any() < channel_min[channel]:
+				channel_min[channel] = np.min(image[image[:,:,channel] != 0.0]) 
+			if np.max(image[:,:,channel]).any() > channel_max[channel]:
 				channel_max[channel] = np.max(image[:,:,channel]) 
 
 print([f'{category} min={channel_min[channel]} max={channel_max[channel]}' for category in classes for channel in range(6)])
