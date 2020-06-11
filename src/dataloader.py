@@ -22,7 +22,7 @@ class dataset (Dataset):
         self.image_classes.sort()
         self.name_to_label = {c: id for id, c in enumerate(self.image_classes)}
         self.image_paths = glob.glob(data_path + '/*/*.npy')
-        self.rng = np.random.default_rng(seed=420) 
+        self.rng = np.random.default_rng(seed=420)
     
     def __len__(self):
         return len(self.image_paths) #len(self.data)
@@ -122,7 +122,7 @@ def make_dataloaders(height=128,width=64,batch_size=256,transform=True,intensity
             else:
                 weights.append(0.2/barley_length)
         weights = torch.FloatTensor(weights)
-        sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=True,)
+        sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=False)
         train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4, pin_memory=True)
         
     else:
