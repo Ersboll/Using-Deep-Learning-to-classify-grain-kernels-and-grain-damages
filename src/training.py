@@ -12,10 +12,19 @@ def focal(outputs,targets,alpha=1,gamma=2):
     return focal_loss
     
 #Define the training as a function.
-def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_size='128', num_epochs=1, model_choice='ConvNet', n_features=16, height=256, width=128, droprate=0.5, lr=0.1, num_blocks=3, r='r'):
+def train(model, optimizer, scheduler, train_loader, test_loader, device, loss_function="crossentropy", batch_size='128', num_epochs=1, model_choice='ConvNet', n_features=16, height=256, width=128, droprate=0.5, lr=0.1, num_blocks=3, r='r', weighted=1, transform=1, intensity=1):
+    if loss_function == "focal":
+        lf = focal
+    elif loss_function == "crossentropy":
+        lf = F.cross_entropy
+    else:
+        sys.exit("The chosen loss function isn't valid")
     classes = test_loader.dataset.get_image_classes()
+    
     writer = SummaryWriter(log_dir="../logs/" + 
-    datetime.today().strftime('%d-%m-%y:%H%M') + f' {model_choice} lr={lr} droprate={droprate} blocks={num_blocks} features={n_features} height={height}')
+    datetime.today().strftime('%d-%m-%y:%H%M') +
+    f' {model_choice} {loss_function} blocks={num_blocks} features={n_features} height={height} width={width} weighted={weighted} transform={transform} intensity={intensity}')
+    
     for epoch in range(num_epochs):
         print(epoch)
         model.train()
@@ -79,7 +88,7 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, batch_
         
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
         
-    writer.add_hparams({'Batch_Size':batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r}, {'hparam/Barley':Barley_Acc, 'hparam/Broken':Broken_Acc, 'hparam/Oat_Acc':Oat_Acc, 'hparam/Rye':Rye_Acc, 'hparam/Wheat':Wheat_Acc, 'hparam/Train_Accuracy':train_acc, 'hparam/Test_Accuracy':test_acc})
+    writer.add_hparams({'Batch_Size':batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Loss function':loss_function, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r, 'Weighted':weigted, 'Transform':transform, 'Intensity':intensity}, {'hparam/Barley':Barley_Acc, 'hparam/Broken':Broken_Acc, 'hparam/Oat_Acc':Oat_Acc, 'hparam/Rye':Rye_Acc, 'hparam/Wheat':Wheat_Acc, 'hparam/Train_Accuracy':train_acc, 'hparam/Test_Accuracy':test_acc})
     
     #save model
-    torch.save(model.state_dict(), '../Models/{date}_{model_choice}_lr={lr}_droprate={droprate}_blocks={blocks}_features={features}_height={height}'.format(date=datetime.today().strftime('%d-%m-%y:%H%M'),model_choice=model_choice,lr=lr,droprate=droprate,blocks=num_blocks,features=n_features,height=height))
+    torch.save(model.state_dict(), '../Models/{date}_{model_choice}_{loss}_Blocks={blocks}_Features={features}_Height={height}_Width={width}_Weighted={weighted}_Transform={transform}_Intensity={intensity}'.format(date=datetime.today().strftime('%d-%m-%y:%H%M'), model_choice=model_choice, loss=loss_function, blocks=num_blocks, features=n_features, height=height, width=width, weighted=weighted, transform=transform, intensity=intensity))
