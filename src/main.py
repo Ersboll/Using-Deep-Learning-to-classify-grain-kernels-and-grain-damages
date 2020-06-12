@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import sys
+import random
 import torch
 import torch.optim as optim
 from datetime import datetime
@@ -40,9 +41,16 @@ metric_params = dict(batch_size=batch_size,
 
 for i in range(len(sys.argv)):
     print(sys.argv[i])
-
-torch.manual_seed(420)
-np.random.seed(420)
+    
+seed = 1337
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.enabled = False
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.deterministic = True
 
 if torch.cuda.is_available():
     print("The code will run on GPU.")
@@ -50,7 +58,7 @@ else:
     print("The code will run on CPU.")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-train_loader,test_loader = make_dataloaders(height, width, batch_size,transform=transform,intensity=intensity,weighted=weighted)
+train_loader,test_loader = make_dataloaders(height, width, batch_size,transform=transform,intensity=intensity,weighted=weighted,seed=seed)
 
 #initialize model and sent to device
 if model_choice == "SE_ResNet":

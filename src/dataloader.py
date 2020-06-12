@@ -12,7 +12,7 @@ from torch.utils.data import WeightedRandomSampler
 
 
 class dataset (Dataset):
-    def __init__(self,train,height,width,transform=True,intensity=True,data_path='../data'):  
+    def __init__(self,train,height,width,transform=True,intensity=True,seed=42,data_path='../data'):  
         self.height = height
         self.width = width
         self.transform = transform
@@ -22,7 +22,7 @@ class dataset (Dataset):
         self.image_classes.sort()
         self.name_to_label = {c: id for id, c in enumerate(self.image_classes)}
         self.image_paths = glob.glob(data_path + '/*/*.npy')
-        self.rng = np.random.default_rng(seed=420)
+        self.rng = np.random.default_rng(seed=seed)
     
     def __len__(self):
         return len(self.image_paths) #len(self.data)
@@ -90,13 +90,12 @@ class dataset (Dataset):
 
 
 
-def make_dataloaders(height=128,width=64,batch_size=256,transform=True,intensity=True,weighted=True):
+def make_dataloaders(height=128,width=64,batch_size=256,transform=True,intensity=True,weighted=True,seed=42):
     """
     Creates a train and test dataloader with a variable batch size and image shape.
     And using a weighted sampler for the training dataloader to have balanced mini-batches when training.
     """
-    torch.manual_seed(420)
-    train_set = dataset(train=True,transform=transform,intensity=intensity,height=height,width=width)
+    train_set = dataset(train=True,transform=transform,intensity=intensity,height=height,width=width,seed=seed)
     test_set = dataset(train=False,transform=False,intensity=intensity,height=height,width=width)
     
     if weighted:
@@ -123,11 +122,11 @@ def make_dataloaders(height=128,width=64,batch_size=256,transform=True,intensity
                 weights.append(0.2/barley_length)
         weights = torch.FloatTensor(weights)
         sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=False)
-        train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler,num_workers=4, pin_memory=True)
+        train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler, worker_init_fn=np.random.seed(seed),num_workers=4, pin_memory=True)
         
     else:
-        train_loader = DataLoader(train_set, batch_size=batch_size,shuffle=True,num_workers=4, pin_memory=True)
+        train_loader = DataLoader(train_set, batch_size=batch_size,shuffle=True, worker_init_fn=np.random.seed(seed),num_workers=4, pin_memory=True)
         
-    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False,num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, worker_init_fn=np.random.seed(seed),num_workers=4, pin_memory=True)
     
     return train_loader,test_loader
