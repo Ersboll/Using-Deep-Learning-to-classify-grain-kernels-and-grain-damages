@@ -15,8 +15,10 @@ def focal(outputs,targets,alpha=1,gamma=2):
 def train(model, optimizer, scheduler, train_loader, test_loader, device, loss_function="crossentropy", batch_size='128', num_epochs=1, model_choice='ConvNet', n_features=16, height=256, width=128, droprate=0.5, lr=0.1, num_blocks=3, r='r', weighted=1, transform=1, intensity=1):
     if loss_function == "focal":
         lf = focal
+        print("using focal loss")
     elif loss_function == "crossentropy":
         lf = F.cross_entropy
+        print("using cross-entropy loss")
     else:
         sys.exit("The chosen loss function isn't valid")
     classes = test_loader.dataset.get_image_classes()
@@ -37,7 +39,7 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, loss_f
             #Forward pass your image through the network
             output = model(data,scaler)
             #Compute the loss
-            loss = F.cross_entropy(output,target) #focal(output,target) #F.nll_loss(torch.log(output), target)
+            loss = lf(output,target)
             #Backward pass through the network
             loss.backward()
             #Update the weights

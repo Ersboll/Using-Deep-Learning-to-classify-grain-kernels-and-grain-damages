@@ -22,6 +22,7 @@ num_blocks = int(sys.argv[10])
 intensity = int(sys.argv[11])
 transform = int(sys.argv[12])
 weighted = int(sys.argv[13])
+seed = int(sys.argv[14])
 r = 16
 
 metric_params = dict(batch_size=batch_size,
@@ -38,11 +39,25 @@ metric_params = dict(batch_size=batch_size,
                      transform=transform,
                      intensity=intensity)
  
+   
+print("Model: "+model_choice)
+print("Loss function: "+loss_function)
+print("Epochs: "+str(num_epochs))
+print("Batch size: "+str(batch_size))
+print("Learning rate: "+str(lr))
+print("Dropout rate: "+str(droprate))
+print("Features: "+str(n_features))
+print("Number of blocks: "+str(num_blocks))
+print("Intensity augmentation: "+str(intensity))
+print("Random flip/mirroring: "+str(transform))
+print("Weighted sampler: "+str(weighted))
+print("Height: "+str(height))
+print("Width: "+str(width))
 
-for i in range(len(sys.argv)):
-    print(sys.argv[i])
-    
-seed = 1337
+#seed = np.random.randint(0,2**32-1)
+
+print("Seed: "+str(seed))
+
 random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)

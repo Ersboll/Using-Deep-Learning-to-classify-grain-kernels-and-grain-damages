@@ -1,10 +1,10 @@
 #!/bin/sh
 #BSUB -q gpuv100
-#BSUB -J speedtest
+#BSUB -J sampler
 #BSUB -n 4
 #BSUB -R "span[hosts=1]"
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -W 01:30
+#BSUB -W 00:30
 #BSUB -R "rusage[mem=8GB]"
 #BSUB -R "select[gpu32gb]"
 #BSUB -o ../outputs/gpu_%J.out
@@ -12,7 +12,7 @@
 #BSUB -cwd "/zhome/e2/d/117429/foss/src/"
 # -- end of LSF options --
 
-nvidia-smi
+# nvidia-smi
 # Load the cuda module
 # module load cuda/10.2
 
@@ -21,7 +21,7 @@ nvidia-smi
 module load python3
 source ../env/bin/activate
 # Model - Loss function - Epochs - Batchsize - Learning rate - Width - Height - Droprate - N-feature - Num_blocks - Intensity(on/off) - Transform (on/off) - Weighted sampling (on/off)
-python3 main.py ConvNet crossentropy 25 256 0.01 64 128 0.6 64 0 0 0 0 >| ../outputs/Sampler0.out 2>| ../outputs/Sampler0.err
+python3 main.py ConvNet crossentropy 25 256 0.01 128 128 0.6 64 0 1 0 0 >| ../outputs/sampler0_0.out 2>| ../outputs/sampler0_0.err
 
 # python3 main.py ResNet focal 50 128 0.01 128 256 0.6 32 2 1 1 1>| ../outputs/ResNet2.out 2>| ../outputs/ResNet2.err
 
