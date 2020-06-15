@@ -9,7 +9,8 @@ from training import train
 from dataloader import make_dataloaders
 
 #Define hyperparameters and model
-model_choice = sys.argv[1] #"SE_ResNet" "ResNet" "ConvNet"
+r = 16
+model_choice = sys.argv[1] #"SE_ResNet" "ResNet" "ConvNet" "ConvNetAdapt"
 loss_function = sys.argv[2] #"crossentropy" "focal" 
 num_epochs = int(sys.argv[3])
 batch_size = int(sys.argv[4]) 
@@ -22,8 +23,10 @@ num_blocks = int(sys.argv[10])
 intensity = int(sys.argv[11])
 transform = int(sys.argv[12])
 weighted = int(sys.argv[13])
-seed = int(sys.argv[14])
-r = 16
+try:
+    seed = int(sys.argv[14])
+except:
+    seed = np.random.randint(0,2**32-1)
 
 metric_params = dict(batch_size=batch_size,
                      num_epochs=num_epochs,
@@ -53,9 +56,6 @@ print("Random flip/mirroring: "+str(transform))
 print("Weighted sampler: "+str(weighted))
 print("Height: "+str(height))
 print("Width: "+str(width))
-
-#seed = np.random.randint(0,2**32-1)
-
 print("Seed: "+str(seed))
 
 random.seed(seed)
@@ -93,6 +93,12 @@ elif model_choice == "ConvNet":
     model = ConvNet(n_in=7, n_features=n_features, height=height, width=width, droprate=droprate).float()
     model.to(device)
     print("ConvNet initialized")
+    
+elif model_choice == "ConvNetAdapt":
+    from model import ConvNetAdapt
+    model = ConvNetAdapt(n_in=7, n_features=n_features, height=height, width=width, droprate=droprate).float()
+    model.to(device)
+    print("ConvNetAdapt initialized")
 
 else:
     sys.exit("The chosen model isn't valid")
@@ -102,4 +108,4 @@ optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, dampening=0.05)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(num_epochs/2), gamma=0.1)
 #run the training loop
 #train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
-train(model, optimizer, scheduler, train_loader=train_loader, test_loader=test_loader, device=device, loss_function=loss_function, **metric_params)
+train(model, optimizer, scheduler, train_loader=train_loader, test_loader=test_loader, device=device, loss_function=loss_function, seed=seed, **metric_params)

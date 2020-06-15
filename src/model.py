@@ -129,3 +129,46 @@ class ConvNet(nn.Module):
         x = cat((x,scaler),1)
         out = self.fc(x)
         return out
+    
+#Define convolutional network
+class ConvNetAdapt(nn.Module):
+    def __init__(self, n_in, n_features, height, width, droprate):
+        super(ConvNetAdapt, self).__init__()
+        
+        self.conv1 = nn.Sequential(nn.Conv2d(n_in, n_features, kernel_size=3, stride=1, padding=1),                                                          
+                                   nn.BatchNorm2d(n_features),
+                                   nn.Dropout(p=droprate),
+                                   nn.ReLU(),
+                                   nn.MaxPool2d(2,2), #Reduce image size by half  
+                                   nn.Conv2d(n_features,2*n_features,3,1,1),
+                                   nn.BatchNorm2d(2*n_features),
+                                   nn.Dropout(p=droprate),
+                                   nn.ReLU(),
+                                   nn.Conv2d(2*n_features,2*n_features,3,1,1),                                 
+                                   nn.BatchNorm2d(2*n_features),nn.ReLU(),
+                                   nn.Dropout(p=droprate),
+                                   nn.ReLU(),
+                                   nn.MaxPool2d(2,2), #Reduce image size by half
+                                   nn.Conv2d(2*n_features,4*n_features,3,1,1),
+                                   nn.BatchNorm2d(4*n_features),
+                                   nn.Dropout(p=droprate),
+                                   nn.ReLU())
+        
+        self.AdaptivePool = nn.AdaptiveAvgPool2d(output_size=(8,8))
+        
+        self.fc = nn.Sequential(nn.Linear(8*8*4*n_features+2, 1024),
+                                nn.Dropout(p=droprate),
+                                nn.ReLU(),
+                                nn.Linear(1024, 512),
+                                nn.Dropout(p=droprate),
+                                nn.ReLU(),
+                                nn.Linear(512,5))
+        
+    def forward(self, x, scaler):
+        x = self.conv1(x)
+        x = self.AdaptivePool(x)
+        #reshape x so it becomes flat, except for the first dimension (which is the minibatch)
+        x = x.view(x.size(0), -1)
+        x = cat((x,scaler),1)
+        out = self.fc(x)
+        return out
