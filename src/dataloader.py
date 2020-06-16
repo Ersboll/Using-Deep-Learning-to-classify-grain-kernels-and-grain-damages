@@ -37,10 +37,11 @@ class dataset (Dataset):
         image = image[:,:,:7]
         
         #create a simple mask, and make everything else 0
-        mask = np.zeros((image.shape[0],image.shape[1])) #image[:,:,6].copy()
+        mask = np.zeros((image.shape[0],image.shape[1]))
         temp_blue = image[:,:,1].copy()
         temp_blue[temp_blue==0] = 1
         mask[image[:,:,4]/temp_blue >= 1] = 1
+        mask[image[:,:,4] >= 40] = 1
         mask[:5,:5] = 0
         image[mask==0] = 0
         
@@ -76,9 +77,9 @@ class dataset (Dataset):
         X = transforms.functional.to_tensor(image)
         
         if self.intensity:
-            for i in range(X.shape[0]):
-                X[i,:,:] = X[i,:,:]/torch.max(X[i,:,:])
-#             X = X/torch.max(X)
+#             for i in range(X.shape[0]):
+#                 X[i,:,:] = X[i,:,:]/torch.max(X[i,:,:])
+            X = X/torch.max(X)
         
         scaler = torch.from_numpy(scaler).float()
         
