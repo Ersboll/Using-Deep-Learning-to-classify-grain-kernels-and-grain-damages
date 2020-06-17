@@ -12,11 +12,12 @@ from torch.utils.data import WeightedRandomSampler
 
 
 class dataset (Dataset):
-    def __init__(self,train,height,width,transform=True,intensity=True,seed=42,data_path='../data'):  
+    def __init__(self,train,height,width,transform=True,intensity=True,seed=42,intensity_type="image",data_path='../data'):  
         self.height = height
         self.width = width
         self.transform = transform
         self.intensity = intensity
+        self.intensity_type = intensity_type
         data_path = os.path.join(data_path, 'train' if train else 'test')
         self.image_classes = [os.path.split(d)[1] for d in glob.glob(data_path +'/*') if os.path.isdir(d)]
         self.image_classes.sort()
@@ -77,9 +78,21 @@ class dataset (Dataset):
         X = transforms.functional.to_tensor(image)
         
         if self.intensity:
-#             for i in range(X.shape[0]):
-#                 X[i,:,:] = X[i,:,:]/torch.max(X[i,:,:])
-            X = X/torch.max(X)
+            if self.intensity_type == "imagechannel":
+                for i in range(X.shape[0]):
+                    X[i,:,:] = X[i,:,:]/torch.max(X[i,:,:])
+            elif self.intensity_type == "image":
+                X = X/torch.max(X)
+                
+            elif self.intensity_type == "channel":
+                X[1,:,:] = X[1,:,:]/0.94901961
+                X[2,:,:] = X[2,:,:]/0.96078432
+                X[3,:,:] = X[3,:,:]/0.99215686
+                X[4,:,:] = X[4,:,:]/0.99607843
+                X[6,:,:] = X[6,:,:]/0.59215689
+ 
+            else:
+                sys.exit("The chosen intensity augmentation method isn't valid")
         
         scaler = torch.from_numpy(scaler).float()
         
@@ -93,13 +106,13 @@ class dataset (Dataset):
 
 
 
-def make_dataloaders(height=128,width=64,batch_size=256,transform=True,intensity=True,weighted=True,seed=42):
+def make_dataloaders(height=128,width=64,batch_size=256,transform=True,intensity=True,weighted=False,seed=42,intensity_type="image"):
     """
     Creates a train and test dataloader with a variable batch size and image shape.
     And using a weighted sampler for the training dataloader to have balanced mini-batches when training.
     """
-    train_set = dataset(train=True,transform=transform,intensity=intensity,height=height,width=width,seed=seed)
-    test_set = dataset(train=False,transform=False,intensity=intensity,height=height,width=width)
+    train_set = dataset(train=True,transform=transform,intensity=intensity,height=height,width=width,seed=seed,intensity_type=intensity_type)
+    test_set = dataset(train=False,transform=False,intensity=intensity,height=height,width=width,intensity_type=intensity_type)
     
     if weighted:
         weights = []

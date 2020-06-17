@@ -8,9 +8,10 @@ from datetime import datetime
 from training import train
 from dataloader import make_dataloaders
 
+
 #Define hyperparameters and model
 r = 16
-model_choice = sys.argv[1] #"SE_ResNet" "ResNet" "ConvNet" "ConvNetAdapt"
+model_choice = sys.argv[1] #"SE_ResNet" "ResNet" "ConvNet" "ConvNetScale"
 loss_function = sys.argv[2] #"crossentropy" "focal" 
 num_epochs = int(sys.argv[3])
 batch_size = int(sys.argv[4]) 
@@ -21,10 +22,11 @@ droprate = float(sys.argv[8])
 n_features = int(sys.argv[9])
 num_blocks = int(sys.argv[10])
 intensity = int(sys.argv[11])
-transform = int(sys.argv[12])
-weighted = int(sys.argv[13])
+intensity_type = sys.argv[12] #"imagechannel" "image" "channel"
+transform = int(sys.argv[13])
+weighted = int(sys.argv[14])
 try:
-    seed = int(sys.argv[14])
+    seed = int(sys.argv[15])
 except:
     seed = np.random.randint(0,2**32-1)
 
@@ -40,7 +42,8 @@ metric_params = dict(batch_size=batch_size,
                      r=r,
                      weighted=weighted,
                      transform=transform,
-                     intensity=intensity)
+                     intensity=intensity,
+                     intensity_type=intensity_type)
  
    
 print("Model: "+model_choice)
@@ -52,6 +55,7 @@ print("Dropout rate: "+str(droprate))
 print("Features: "+str(n_features))
 print("Number of blocks: "+str(num_blocks))
 print("Intensity augmentation: "+str(intensity))
+print("Intensity augmentation method: "+intensity_type)
 print("Random flip/mirroring: "+str(transform))
 print("Weighted sampler: "+str(weighted))
 print("Height: "+str(height))
@@ -73,7 +77,7 @@ else:
     print("The code will run on CPU.")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-train_loader,test_loader = make_dataloaders(height, width, batch_size,transform=transform,intensity=intensity,weighted=weighted,seed=seed)
+train_loader,test_loader = make_dataloaders(height, width, batch_size,transform=transform,intensity=intensity,weighted=weighted,seed=seed,intensity_type=intensity_type)
 
 #initialize model and sent to device
 if model_choice == "SE_ResNet":
@@ -94,18 +98,18 @@ elif model_choice == "ConvNet":
     model.to(device)
     print("ConvNet initialized")
     
-elif model_choice == "ConvNetAdapt":
-    from model import ConvNetAdapt
-    model = ConvNetAdapt(n_in=7, n_features=n_features, height=height, width=width, droprate=droprate).float()
+elif model_choice == "ConvNetScale":
+    from model import ConvNetScale
+    model = ConvNetScale(n_in=7, n_features=n_features, height=height, width=width, droprate=droprate).float()
     model.to(device)
-    print("ConvNetAdapt initialized")
+    print("ConvNetScale initialized")
 
 else:
     sys.exit("The chosen model isn't valid")
     
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, dampening=0.05)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(num_epochs/2), gamma=0.1)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(num_epochs), gamma=0.1)
 #run the training loop
 #train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
 train(model, optimizer, scheduler, train_loader=train_loader, test_loader=test_loader, device=device, loss_function=loss_function, seed=seed, **metric_params)
