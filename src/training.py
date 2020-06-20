@@ -12,7 +12,7 @@ def focal(outputs,targets,alpha=1,gamma=2):
     return focal_loss
     
 #Define the training as a function.
-def train(model, optimizer, scheduler, train_loader, test_loader, device, loss_function="crossentropy", seed=42, batch_size='128', num_epochs=1, model_choice='ConvNet', n_features=16, height=256, width=128, droprate=0.5, lr=0.1, num_blocks=3, r='r', weighted=1, transform=1, intensity=1,intensity_type="image"):
+def train(model, optimizer, scheduler, train_loader, test_loader, device, loss_function="crossentropy", seed=42, batch_size='128', num_epochs=1, model_choice='ConvNet', n_features=16, height=256, width=128, droprate=0.5, lr=0.1, num_blocks=3, r='r', weighted=1, transform=1, intensity=1,intensity_type="image",final=False):
     if loss_function == "focal":
         lf = focal
         print("using focal loss")
@@ -21,7 +21,7 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, loss_f
         print("using cross-entropy loss")
     else:
         sys.exit("The chosen loss function isn't valid")
-    classes = test_loader.dataset.get_image_classes()
+    classes = train_loader.dataset.get_image_classes()
     
     writer = SummaryWriter(log_dir="../logs/" + 
     datetime.today().strftime('%d-%m-%y:%H%M') +
@@ -54,49 +54,49 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, loss_f
             
             #Remove mini-batch from memory
             del data, target, loss
-#            print("mini-batch done")
-        #Comput the test accuracy
-        test_correct = 0
-        model.eval()
-        class_correct = list(0. for i in range(len(classes)))
-        class_total = list(0. for i in range(len(classes)))
-        for data, target,scaler in test_loader:
-            data, scaler = data.to(device), scaler.to(device)
-            with torch.no_grad():
-                if model_choice == "ConvNetScale":
-                    output = model(data,scaler)
-                else:
-                    output = model(data)
-            predicted = output.argmax(1).cpu()
-            
-            test_correct += (target == predicted).sum().item()
-            
-            c = (predicted == target).squeeze()
-            for i in range(data.shape[0]):
-                label = target[i]
-                class_correct[label] += c[i].item()
-                class_total[label] += 1
-                
-        scheduler.step()
-                
-        for i in range(len(classes)):
-            print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))            
+        if not final: 
+            #Comput the test accuracy
+            test_correct = 0
+            model.eval()
+            class_correct = list(0. for i in range(len(classes)))
+            class_total = list(0. for i in range(len(classes)))
+            for data, target,scaler in test_loader:
+                data, scaler = data.to(device), scaler.to(device)
+                with torch.no_grad():
+                    if model_choice == "ConvNetScale":
+                        output = model(data,scaler)
+                    else:
+                        output = model(data)
+                predicted = output.argmax(1).cpu()
 
-        Barley_Acc = 100 * class_correct[0] / class_total[0]
-        Broken_Acc = 100 * class_correct[1] / class_total[1]
-        Oat_Acc = 100 * class_correct[2] / class_total[2]
-        Rye_Acc = 100 * class_correct[3] / class_total[3]
-        Wheat_Acc = 100 * class_correct[4] / class_total[4]
+                test_correct += (target == predicted).sum().item()
 
-        train_acc = train_correct/len(train_loader.dataset)
-        test_acc = test_correct/len(test_loader.dataset)
-        writer.add_scalars('Train_Test_Accuracies', {'Train_Accuracy':train_acc, 'Test_Accuracy':test_acc}, epoch)
-        writer.add_scalars('Class_Accuracies', {'Barley':Barley_Acc, 'Broken':Broken_Acc, 'Oat':Oat_Acc, 'Rye':Rye_Acc, 'Wheat':Wheat_Acc}, epoch)
-        
-        
-        print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
+                c = (predicted == target).squeeze()
+                for i in range(data.shape[0]):
+                    label = target[i]
+                    class_correct[label] += c[i].item()
+                    class_total[label] += 1
+
+            scheduler.step()
+
+            for i in range(len(classes)):
+                print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))            
+
+            Barley_Acc = 100 * class_correct[0] / class_total[0]
+            Broken_Acc = 100 * class_correct[1] / class_total[1]
+            Oat_Acc = 100 * class_correct[2] / class_total[2]
+            Rye_Acc = 100 * class_correct[3] / class_total[3]
+            Wheat_Acc = 100 * class_correct[4] / class_total[4]
+
+            train_acc = train_correct/len(train_loader.dataset)
+            test_acc = test_correct/len(test_loader.dataset)
+            writer.add_scalars('Train_Test_Accuracies', {'Train_Accuracy':train_acc, 'Test_Accuracy':test_acc}, epoch)
+            writer.add_scalars('Class_Accuracies', {'Barley':Barley_Acc, 'Broken':Broken_Acc, 'Oat':Oat_Acc, 'Rye':Rye_Acc, 'Wheat':Wheat_Acc}, epoch)
+
+
+            print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
         
     writer.add_hparams({'Batch_Size':batch_size, 'Epochs':num_epochs, 'Model':model_choice, 'Loss function':loss_function, 'Features':n_features, 'Height':height, 'Width':width, 'Drop':droprate, 'LR':lr, 'Blocks':num_blocks, 'R':r, 'Weighted':weighted, 'Transform':transform, 'Intensity':intensity, 'intensity type':intensity_type, 'Seed':seed}, {'hparam/Barley':Barley_Acc, 'hparam/Broken':Broken_Acc, 'hparam/Oat_Acc':Oat_Acc, 'hparam/Rye':Rye_Acc, 'hparam/Wheat':Wheat_Acc, 'hparam/Train_Accuracy':train_acc, 'hparam/Test_Accuracy':test_acc})
     
     #save model
-#     torch.save(model.state_dict(), '../Models/{date}_{model_choice}_Features={features}_Blocks={blocks}_Height={height}_Width={width}'.format(date=datetime.today().strftime('%d-%m-%y:%H%M'), model_choice=model_choice, blocks=num_blocks, features=n_features, height=height, width=width))
+    torch.save(model.state_dict(), '../Models/{date}_{model_choice}_Features={features}_Blocks={blocks}_Height={height}_Width={width}'.format(date=datetime.today().strftime('%d-%m-%y:%H%M'), model_choice=model_choice, blocks=num_blocks, features=n_features, height=height, width=width))

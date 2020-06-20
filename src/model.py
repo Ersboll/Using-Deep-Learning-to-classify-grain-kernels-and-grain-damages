@@ -11,27 +11,20 @@ class SE_ResNet(nn.Module):
         #First conv layers needs to output the desired number of features.
         conv_layers =[nn.Conv2d(n_in, n_features, kernel_size=3, stride=1, padding=1),
                       nn.Dropout(p=droprate),
-                      nn.ReLU()]
+                      nn.ReLU(),
+                      nn.MaxPool2d(2,2)]
         
         for i in range(num_blocks):
-            conv_layers.append(SE_ResNetBlock(n_features,droprate))
+            conv_layers.append(SE_ResNetBlock(n_features,droprate,r))
             
         conv_layers.append(nn.Sequential(nn.MaxPool2d(2,2),
                                          nn.Conv2d(n_features, 2*n_features, kernel_size=3, stride=1, padding=1),
                                          nn.Dropout(p=droprate),
                                          nn.ReLU())) #Reduce image size by half
-                           
-        for i in range(num_blocks):
-            conv_layers.append(SE_ResNetBlock(2*n_features,droprate))
-            
-        conv_layers.append(nn.Sequential(nn.MaxPool2d(2,2),
-                                         nn.Conv2d(2*n_features, 4*n_features, kernel_size=3, stride=1, padding=1),
-                                         nn.Dropout(p=droprate),
-                                         nn.ReLU()))
-            
+
         self.blocks = nn.Sequential(*conv_layers)
         
-        self.fc = nn.Sequential(nn.Linear(int(height/4)*int(width/4)*4*n_features, 1024),
+        self.fc = nn.Sequential(nn.Linear(int(height/4)*int(width/4)*2*n_features, 1024),
                                 nn.Dropout(p=droprate),
                                 nn.ReLU(),
                                 nn.Linear(1024, 512),
