@@ -129,7 +129,7 @@ model.to(device)
 print("ConvNet initialized")
     
 model_list = os.listdir("../Models")
-model.load_state_dict(torch.load("../Models/19-06-20:1405_ConvNet_Features=64_Blocks=0_Height=128_Width=256",map_location=device))
+model.load_state_dict(torch.load("../Models/ConvNet_0982",map_location=device))
 model.eval()
 
 print("Model loaded")

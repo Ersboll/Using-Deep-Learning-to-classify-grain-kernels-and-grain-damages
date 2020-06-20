@@ -5,9 +5,18 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
   
 #Define focal loss    
-def focal(outputs,targets,alpha=1,gamma=2):
+def focal(outputs,targets,gamma=2):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    #Dictionary used to make alpha
+    label_to_distribution = {0: 1-0.455, 1: 1-0.015, 2: 1-0.227, 3: 1-0.136, 4: 1-0.166}
+    #Get cross-entropy loss
     ce_loss = F.cross_entropy(outputs, targets, reduction='none') # important to add reduction='none' to keep per-batch-item loss
     pt = torch.exp(-ce_loss)
+    #create alpha
+    alpha = torch.ones(len(targets))
+    for i,label in enumerate(targets):
+        alpha[i] = alpha[i]*label_to_distribution[label.item()]
+    alpha = alpha.to(device)
     focal_loss = (alpha * (1-pt)**gamma * ce_loss).mean() # mean over the batch
     return focal_loss
     
@@ -28,7 +37,7 @@ def train(model, optimizer, scheduler, train_loader, test_loader, device, loss_f
     f' {model_choice} {loss_function} blocks={num_blocks} features={n_features} height={height} width={width} weighted={weighted} transform={transform} intensity={intensity}')
     
     for epoch in range(num_epochs):
-        print(epoch)
+        print(epoch+1)
         model.train()
         #For each epoch
         train_correct = 0
