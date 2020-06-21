@@ -9,17 +9,32 @@ from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 import torchvision.transforms as transforms
 from torch.utils.data import WeightedRandomSampler
+from model import ConvNet
 
+if torch.cuda.is_available():
+    print("The code will run on GPU.")
+else:
+    print("The code will run on CPU.")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+#Define hyperparameters and model
+# model_choice = "ConvNet" #"SE_ResNet" "ResNet" "ConvNet"
+batch_size = 64 
+width = 256
+height = 128
+droprate = 0
+n_features = 64
+intensity = 1
+intensity_type = "channel"
 
 class dataset (Dataset):
-    def __init__(self,train,height,width,transform=True,intensity=True,seed=42,intensity_type="image",data_path='../data',final=False):  
+    def __init__(self,train,height,width,transform=True,intensity=True,seed=42,intensity_type="image",data_path='../data'):  
         self.height = height
         self.width = width
         self.transform = transform
         self.intensity = intensity
         self.intensity_type = intensity_type
-        if not final:
-            data_path = os.path.join(data_path, 'train' if train else 'test')
+        data_path = os.path.join(data_path, 'train' if train else 'test')
         self.image_classes = [os.path.split(d)[1] for d in glob.glob(data_path +'/*') if os.path.isdir(d)]
         self.image_classes.sort()
         self.name_to_label = {c: id for id, c in enumerate(self.image_classes)}
@@ -105,50 +120,47 @@ class dataset (Dataset):
     def get_image_classes(self):
         return self.image_classes
 
+test_set = dataset(train=False,transform=False,intensity=intensity,height=height,width=width,intensity_type=intensity_type)
 
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
-def make_dataloaders(height=128,width=64,batch_size=256,transform=True,intensity=True,weighted=False,seed=42,intensity_type="channel",final=False):
-    """
-    Creates a train and test dataloader with a variable batch size and image shape.
-    And using a weighted sampler for the training dataloader to have balanced mini-batches when training.
-    """
-    if final:
-        train_set = dataset(train=True,transform=transform,intensity=intensity,height=height,width=width,seed=seed,intensity_type=intensity_type,data_path="../../../../../27/c/138037/eyefoss-project-blobs/",final=final)
-    else:
-        train_set = dataset(train=True,transform=transform,intensity=intensity,height=height,width=width,seed=seed,intensity_type=intensity_type,final=final)
-        test_set = dataset(train=False,transform=False,intensity=intensity,height=height,width=width,intensity_type=intensity_type,final=final)
+model = ConvNet(n_in=7, n_features=n_features, height=height, width=width, droprate=droprate).float()
+model.to(device)
+print("ConvNet initialized")
     
-    if weighted:
-        weights = []
+model_list = os.listdir("../Models")
+model.load_state_dict(torch.load("../Models/ConvNet_0982",map_location=device))
+model.eval()
 
-        train_paths = train_set.get_image_paths()
-        oat_length = len(os.listdir('../data/train/Oat'))
-        wheat_length = len(os.listdir('../data/train/Wheat'))
-        rye_length = len(os.listdir('../data/train/Rye'))
-        broken_length = len(os.listdir('../data/train/Broken'))
-        barley_length = len(os.listdir('../data/train/Barley'))
+print("Model loaded")
 
-        for file in train_paths:
-            label = os.path.split(os.path.split(file)[0])[1]
-            if label == 'Oat':
-                weights.append(0.2/oat_length)
-            elif label == "Wheat":
-                weights.append(0.2/wheat_length)
-            elif label == "Rye":
-                weights.append(0.2/rye_length)
-            elif label == "Broken":
-                weights.append(0.2/broken_length)
-            else:
-                weights.append(0.2/barley_length)
-        weights = torch.FloatTensor(weights)
-        sampler = WeightedRandomSampler(weights=weights,num_samples=len(train_set),replacement=False)
-        train_loader = DataLoader(train_set, batch_size=batch_size,sampler=sampler, worker_init_fn=np.random.seed(seed),num_workers=4, pin_memory=True)
+classes = test_loader.dataset.get_image_classes()
+test_correct = 0
+class_correct = list(0. for i in range(len(classes)))
+class_total = list(0. for i in range(len(classes)))
+class_pred = list(0. for i in range(len(classes)))
+for data, target,scaler in test_loader:
+    data, scaler = data.to(device), scaler.to(device)
+    with torch.no_grad():
+        output = model(data)
+    predicted = output.argmax(1).cpu()
+
+    test_correct += (target == predicted).sum().item()
+
+    c = (predicted == target).squeeze()
+    for i in range(data.shape[0]):
+        label = target[i]
+        pred = predicted[i]
+        class_correct[label] += c[i].item()
+        class_total[label] += 1
+        class_pred[pred] += 1
         
-    else:
-        train_loader = DataLoader(train_set, batch_size=batch_size,shuffle=True, worker_init_fn=np.random.seed(seed),num_workers=4, pin_memory=True)
-        
-    if not final:
-        test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, worker_init_fn=np.random.seed(seed),num_workers=4, pin_memory=True)    
-        return train_loader,test_loader
-    else:
-        return train_loader
+for i in range(len(classes)):
+    print('Accuracy of %5s : %2d %%' % (classes[i], 100 * class_correct[i] / class_total[i]))
+    
+test_acc = test_correct/len(test_loader.dataset)
+print("Accuracy test: {test:.1f}%".format(test=100*test_acc))
+
+print('Predicted distribution:')
+for i in range(len(classes)):
+    print('%.1f : %5s %%' % (100 * class_pred[i] / len(test_loader.dataset), classes[i]))

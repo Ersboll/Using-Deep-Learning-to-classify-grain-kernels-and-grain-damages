@@ -12,7 +12,9 @@ decorator==4.4.2
 defusedxml==0.6.0
 docker-pycreds==0.4.0
 entrypoints==0.3
+enum34==1.1.10
 future==0.18.2
+futures==3.1.1
 gitdb==4.0.5
 GitPython==3.1.2
 google-auth==1.16.0
@@ -100,6 +102,7 @@ tornado==6.0.4
 tqdm==4.45.0
 traitlets==4.3.3
 txt2tags==3.7
+typing==3.7.4.1
 urllib3==1.25.9
 virtualenv==15.1.0
 watchdog==0.10.2

@@ -14,7 +14,7 @@ r = 16
 model_choice = sys.argv[1] #"SE_ResNet" "ResNet" "ConvNet" "ConvNetScale"
 loss_function = sys.argv[2] #"crossentropy" "focal" 
 num_epochs = int(sys.argv[3])
-batch_size = int(sys.argv[4]) 
+batch_size = int(sys.argv[4])
 lr = float(sys.argv[5])
 width = int(sys.argv[6])
 height = int(sys.argv[7])
@@ -25,8 +25,9 @@ intensity = int(sys.argv[11])
 intensity_type = sys.argv[12] #"imagechannel" "image" "channel"
 transform = int(sys.argv[13])
 weighted = int(sys.argv[14])
+final = int(sys.argv[15])
 try:
-    seed = int(sys.argv[15])
+    seed = int(sys.argv[16])
 except:
     seed = np.random.randint(0,2**32-1)
 
@@ -77,7 +78,11 @@ else:
     print("The code will run on CPU.")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-train_loader,test_loader = make_dataloaders(height, width, batch_size,transform=transform,intensity=intensity,weighted=weighted,seed=seed,intensity_type=intensity_type)
+if not final:
+    train_loader,test_loader = make_dataloaders(height, width, batch_size,transform=transform,intensity=intensity,weighted=weighted,seed=seed,intensity_type=intensity_type,final=final)
+else:
+    train_loader = make_dataloaders(height, width, batch_size,transform=transform,intensity=intensity,weighted=weighted,seed=seed,intensity_type=intensity_type,final=final)
+    test_loader = None
 
 #initialize model and sent to device
 if model_choice == "SE_ResNet":
@@ -112,4 +117,4 @@ optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, dampening=0.05)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(num_epochs), gamma=0.1)
 #run the training loop
 #train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
-train(model, optimizer, scheduler, train_loader=train_loader, test_loader=test_loader, device=device, loss_function=loss_function, seed=seed, **metric_params)
+train(model, optimizer, scheduler, train_loader=train_loader, test_loader=test_loader, device=device, loss_function=loss_function, seed=seed, final=final, **metric_params)
