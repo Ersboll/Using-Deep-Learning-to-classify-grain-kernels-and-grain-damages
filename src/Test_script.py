@@ -139,6 +139,8 @@ test_correct = 0
 class_correct = list(0. for i in range(len(classes)))
 class_total = list(0. for i in range(len(classes)))
 class_pred = list(0. for i in range(len(classes)))
+pred_ = []
+target_ = []
 for data, target,scaler in test_loader:
     data, scaler = data.to(device), scaler.to(device)
     with torch.no_grad():
@@ -146,7 +148,10 @@ for data, target,scaler in test_loader:
     predicted = output.argmax(1).cpu()
 
     test_correct += (target == predicted).sum().item()
-
+    
+    pred_.append(predicted)
+    target_.append(target)
+    
     c = (predicted == target).squeeze()
     for i in range(data.shape[0]):
         label = target[i]
@@ -164,3 +169,6 @@ print("Accuracy test: {test:.1f}%".format(test=100*test_acc))
 print('Predicted distribution:')
 for i in range(len(classes)):
     print('%.1f : %5s %%' % (100 * class_pred[i] / len(test_loader.dataset), classes[i]))
+    
+np.save("predictions",np.array(pred_))
+np.save("true_labels",np.array(target_))

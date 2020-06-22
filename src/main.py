@@ -114,7 +114,8 @@ else:
     
 #initialise optimiser
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, dampening=0.05)
-scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=int(num_epochs), gamma=0.1)
+print("Reduce lr to 0.001 after 10 epochs")
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 #run the training loop
 #train(model, optimizer, train_loader=train_loader, test_loader=test_loader, device=device, num_epochs=num_epochs)
 train(model, optimizer, scheduler, train_loader=train_loader, test_loader=test_loader, device=device, loss_function=loss_function, seed=seed, final=final, **metric_params)
