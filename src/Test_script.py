@@ -170,5 +170,5 @@ print('Predicted distribution:')
 for i in range(len(classes)):
     print('%.1f : %5s %%' % (100 * class_pred[i] / len(test_loader.dataset), classes[i]))
     
-np.save("predictions",np.array(pred_))
-np.save("true_labels",np.array(target_))
+np.save("predictions",torch.cat(pred_).cpu().numpy())
+np.save("true_labels",torch.cat(target_).cpu().numpy())
