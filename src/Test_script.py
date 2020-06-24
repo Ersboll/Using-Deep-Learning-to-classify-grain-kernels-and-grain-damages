@@ -10,6 +10,7 @@ from torch.utils.data import random_split
 import torchvision.transforms as transforms
 from torch.utils.data import WeightedRandomSampler
 from model import ConvNet
+from model import ResNet
 
 if torch.cuda.is_available():
     print("The code will run on GPU.")
@@ -124,12 +125,15 @@ test_set = dataset(train=False,transform=False,intensity=intensity,height=height
 
 test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
-model = ConvNet(n_in=7, n_features=n_features, height=height, width=width, droprate=droprate).float()
+model = ConvNet(n_in=7, n_features=64, height=128, width=256, droprate=0).float()
 model.to(device)
 print("ConvNet initialized")
+
+# model = ResNet(n_in=7, n_features=16, height=128, width=256, droprate=0, num_blocks=2).float()
+# model.to(device)
+# print("ResNet initialized")
     
-model_list = os.listdir("../Models")
-model.load_state_dict(torch.load("../Models/ConvNet_0982",map_location=device))
+model.load_state_dict(torch.load("../Models/ConvNet_final",map_location=device))
 model.eval()
 
 print("Model loaded")
@@ -170,5 +174,5 @@ print('Predicted distribution:')
 for i in range(len(classes)):
     print('%.1f : %5s %%' % (100 * class_pred[i] / len(test_loader.dataset), classes[i]))
     
-np.save("predictions",torch.cat(pred_).cpu().numpy())
+np.save("predictions_resnet",torch.cat(pred_).cpu().numpy())
 np.save("true_labels",torch.cat(target_).cpu().numpy())
