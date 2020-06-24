@@ -9,7 +9,6 @@
 #BSUB -R "select[gpu32gb]"
 #BSUB -o ../outputs/gpu_%J.out
 #BSUB -e ../outputs/gpu_%J.err
-#BSUB -cwd "/zhome/e2/d/117429/foss/src/"
 # -- end of LSF options --
 
 # nvidia-smi
